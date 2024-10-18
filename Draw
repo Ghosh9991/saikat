@@ -1,0 +1,47 @@
+!pip install selenium beautifulsoup4
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# Configure Chrome options (Optional: If you're using Google Colab, use the below options)
+# from selenium.webdriver.chrome.options import Options
+# chrome_options = Options()
+# chrome_options.add_argument('--headless')
+# chrome_options.add_argument('--no-sandbox')
+# chrome_options.add_argument('--disable-dev-shm-usage')
+
+# Initialize the webdriver
+driver = webdriver.Chrome() # Or webdriver.Chrome(options=chrome_options) for Google Colab
+
+# URL of the Indeed search results page
+url = "https://in.indeed.com/jobs?q=performance+marketing&l=India"
+
+driver.get(url)
+
+# Wait for the page to load
+wait = WebDriverWait(driver, 10)
+wait.until(EC.presence_of_element_located((By.ID, "resultsBodyContent")))
+
+# Get the page source
+soup = BeautifulSoup(driver.page_source, "html.parser")
+
+# Extract job data
+jobs = []
+for job_card in soup.find_all("div", class_="jobsearch-SerpJobCard"):
+    title = job_card.find("h2", class_="title").text.strip()
+    company = job_card.find("span", class_="company").text.strip()
+    location = job_card.find("div", class_="recJobLoc").get("data-rc-loc")
+    summary = job_card.find("div", class_="summary").text.strip()
+    jobs.append([title, company, location, summary])
+
+# Create a pandas DataFrame
+df = pd.DataFrame(jobs, columns=["Title", "Company", "Location", "Summary"])
+
+# Print the DataFrame
+print(df)
+
+# Close the webdriver
+driver.quit()
